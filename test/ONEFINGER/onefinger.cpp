@@ -5,7 +5,7 @@
 const char *ssid = "TOUTAIS_PC";
 const char *password = "hzr20020803";
 
-const int hands_a1 = 32;     //拇指
+const int hands_a1 = 32; //拇指
 
 AsyncWebServer server(80); // 创建一个异步网络服务器端口80上的对象。
 
@@ -20,7 +20,7 @@ String read_First_finger()
   else
   {
     Serial.println(a);
-    return String(a;
+    return String(a);
   }
 }
 
@@ -49,13 +49,11 @@ const char index_html[] PROGMEM = R"rawliteral(
 <body>
   <h2>ESP32 DHT Server</h2>
   <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i> 
     <span class="dht-labels">First finger</span> 
     <span id="first_finger">%FIRST%</span>
-    <sup class="units">&deg;C</sup>
   </p>
 </body>
-</html> 
+</html>   
 )rawliteral";
 
 // 创建processor()函数，这将用实际的温度和湿度值替换 HTML 文本中的占位符。
@@ -71,7 +69,6 @@ String processor(const String &var)
 }
 //寻找占位符并进行相应替换
 
-
 void setup()
 {
   Serial.begin(115200);
@@ -82,7 +79,6 @@ void setup()
   {
     delay(1000);
     Serial.println("Connecting to WiFi..");
-
   }
 
   Serial.println("Connected to the WiFi network");
