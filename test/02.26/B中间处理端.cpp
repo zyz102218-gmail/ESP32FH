@@ -2,6 +2,10 @@
 #include <esp_now.h>
 #include "Arduino.h"
 
+
+const char *ssid = "TOUTAIS_PC";
+const char *password = "hzr20020803";
+
 uint8_t broadcastAddress1[] = {0x94, 0xB9, 0x7E, 0xDE, 0xE2, 0xF4};
 // if you have other receivers you can define in the following
 // uint8_t broadcastAddress2[] = {0xFF, , , , , };
@@ -46,20 +50,21 @@ void setup()
 
     Serial.begin(115200);
 
-    WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_AP); //设置为AP模式
+    WiFi.begin(ssid,password); //初始化WiFi
 
     if (esp_now_init() != ESP_OK)
     {
         Serial.println("Error initializing ESP-NOW");
         return;
     }
-
-    esp_now_register_send_cb(OnDataSent);
+    esp_now_recv_cb_t();
+    //esp_now_register_send_cb(OnDataSent);
 
     // register peer
     esp_now_peer_info_t peerInfo;
     peerInfo.channel = 0;
-    peerInfo.encrypt = false;
+    peerInfo.encrypt = false;   
     // register first peer
     memcpy(peerInfo.peer_addr, broadcastAddress1, 6);
 

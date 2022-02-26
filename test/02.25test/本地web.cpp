@@ -1,15 +1,21 @@
 #include "WiFi.h"
 #include <AsyncTCP.h>
 #include "ESPAsyncWebServer.h"
+#define hands_a1 32
+#define hands_a2 35
+#define hands_a3 34
+#define hands_a4 39
+#define hands_a5 36
+
 
 const char *ssid = "TOUTAIS_PC";
 const char *password = "hzr20020803";
 
-const int hands_a1 = 32; //拇指
-const int hands_a2 = 35; //食指
-const int hands_a3 = 34; //中指
-const int hands_a4 = 39; //无名指
-const int hands_a5 = 36; //小指
+// const int hands_a1 = 32; //拇指
+// const int hands_a2 = 35; //食指
+// const int hands_a3 = 34; //中指
+// const int hands_a4 = 39; //无名指
+// const int hands_a5 = 36; //小指
 
 AsyncWebServer server(80); // 创建一个异步网络服务器端口80上的对象。
 
