@@ -5,11 +5,11 @@
 const char *ssid = "TOUTAIS_PC";
 const char *password = "hzr20020803";
 
-const int hands_a1 = 32;     //拇指
-const int hands_a2 = 35;     //食指
-const int hands_a3 = 34;     //中指
-const int hands_a4 = 39;     //无名指
-const int hands_a5 = 36;     //小指
+const int hands_a1 = 32; //拇指
+const int hands_a2 = 35; //食指
+const int hands_a3 = 34; //中指
+const int hands_a4 = 39; //无名指
+const int hands_a5 = 36; //小指
 
 AsyncWebServer server(80); // 创建一个异步网络服务器端口80上的对象。
 
@@ -111,7 +111,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         }
 
         p {
-            font-size: 3.0rem;
+            font-size: 2.3rem;
         }
 
         .units {
@@ -126,7 +126,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style>
 </head>
 
-<body>
+<body text-align: center>
     <h2>ESP32 DHT Server</h2>
     <p>
         <span class="dht-labels">First finger</span>
@@ -209,6 +209,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         xhttp.send();
     }, 10000);
 </script>
+
 </html>
 )rawliteral";
 
@@ -245,7 +246,6 @@ String processor(const String &var)
 }
 //寻找占位符并进行相应替换
 
-
 void setup()
 {
   Serial.begin(115200);
@@ -256,7 +256,6 @@ void setup()
   {
     delay(1000);
     Serial.println("Connecting to WiFi..");
-
   }
 
   Serial.println("Connected to the WiFi network");
