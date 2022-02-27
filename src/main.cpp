@@ -7,6 +7,127 @@ uint8_t broadcastAddress1[] = {0x94, 0xB9, 0x7E, 0xDE, 0xE2, 0xF4};
 // uint8_t broadcastAddress2[] = {0xFF, , , , , };
 // uint8_t broadcastAddress3[] = {0xFF, , , , , };
 // 接收端的mac：94:B9:7E:E9:43:A8
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>ESP Machine hands</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html {
+            font-family: Arial;
+            display: inline-block;
+            margin: 0px auto;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 3.0rem;
+        }
+
+        p {
+            font-size: 2.3rem;
+        }
+
+        .units {
+            font-size: 1.2rem;
+        }
+
+        .dht-labels {
+            font-size: 1.5rem;
+            vertical-align: middle;
+            padding-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body text-align: center>
+    <h2>ESP32 DHT Server</h2>
+    <p>
+        <span class="dht-labels">First finger</span>
+        <span id="first_finger">%FIRST%</span>
+
+    </p>
+    <p>
+        <span class="dht-labels">Second finger</span>
+        <span id="second_finger">%SECOND%</span>
+    </p>
+    <p>
+        <span class="dht-labels">Third finger</span>
+        <span id="third_finger">%THIRD%</span>
+    </p>
+    <p>
+        <span class="dht-labels">Fourth finger</span>
+        <span id="fourth_finger">%FOURTH%</span>
+    </p>
+    <p>
+
+        <span class="dht-labels">Fifth finger</span>
+        <span id="fifth_finger">%FIFTH%</span>
+
+    </p>
+</body>
+
+<script>
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("first_finger").innerHTML = this.responseText;
+            }
+        };
+        xhttp.open("GET", "/first_finger, true");
+        xhttp.send();
+    }, 10000);
+
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("second_finger").innerHTML = this.responseText;
+            }
+        };
+        xhttp.open("GET", "/second_finger", true);
+        xhttp.send();
+    }, 10000);
+
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("third_finger").innerHTML = this.responseText;
+            }
+        };
+        xhttp.open("GET", "/third_finger", true);
+        xhttp.send();
+    }, 10000);
+
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("fourth_finger").innerHTML = this.responseText;
+            }
+        };
+        xhttp.open("GET", "/fourth_finger", true);
+        xhttp.send();
+    }, 10000);
+
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("fifth_finger").innerHTML = this.responseText;
+            }
+        };
+        xhttp.open("GET", "/fifth_finger", true);
+        xhttp.send();
+    }, 10000);
+</script>
+
+</html>
+)rawliteral";
 
 typedef struct data_structure //手指数据结构
 {

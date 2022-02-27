@@ -1,17 +1,25 @@
-#include <WiFi.h>
-#include <esp_now.h>
+#include "WiFi.h"
+#include "esp_now.h"
 #include "Arduino.h"
-
+#include "ArduinoJson.h"
 
 const char *ssid = "TOUTAIS_PC";
 const char *password = "hzr20020803";
-
+int HandsA1Max, HandsA1Min;
+int HandsA2Max, HandsA2Min;
+int HandsA3Max, HandsA3Min;
+int HandsA4Max, HandsA4Min;
+int HandsA5Max, HandsA5Min;
 uint8_t broadcastAddress1[] = {0x94, 0xB9, 0x7E, 0xDE, 0xE2, 0xF4};
 // if you have other receivers you can define in the following
 // uint8_t broadcastAddress2[] = {0xFF, , , , , };
 // uint8_t broadcastAddress3[] = {0xFF, , , , , };
 // 接收端的mac：94:B9:7E:E9:43:A8
 
+// SoftAP基础设置
+IPAddress local_IP(192, 168, 4, 1);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
 typedef struct data_structure //手指数据结构
 {
     int a1;
@@ -20,51 +28,32 @@ typedef struct data_structure //手指数据结构
     int a4;
     int a5;
 } data_structure;
-
-data_structure sending_data; //记得这里改引脚
-const int hands_a1 = 32;     //拇指
-const int hands_a2 = 35;     //食指
-const int hands_a3 = 34;     //中指
-const int hands_a4 = 39;     //无名指
-const int hands_a5 = 36;     //小指
-
-// 收到请回答
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+data_structure RecingData;
+void OnDataRecieve(const uint8_t *mac_addr, const uint8_t *inComingData, int data_len)
 {
-    char macStr[18];
-    Serial.print("Packet to: ");
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    Serial.println(macStr);
-    Serial.println("send status:\t");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    memcpy(&RecingData, inComingData, sizeof(RecingData));
 }
 
 void setup()
 {
-    pinMode(hands_a1, INPUT);
-    pinMode(hands_a2, INPUT);
-    pinMode(hands_a3, INPUT);
-    pinMode(hands_a4, INPUT);
-    pinMode(hands_a5, INPUT);
-
     Serial.begin(115200);
 
-    WiFi.mode(WIFI_AP); //设置为AP模式
-    WiFi.begin(ssid,password); //初始化WiFi
+    WiFi.mode(WIFI_AP);                           //设置为AP模式
+    WiFi.softAP(ssid, password);                  //初始化WiFi,开启softAP模式，大概好像也许会给自己分配一个192.168.4.1
+    WiFi.softAPConfig(local_IP, gateway, subnet); //初始化softAP，此时esp的WiFi部分已经初始化完成
+    // WiFi.begin(ssid, password); //连接到WiFi
 
     if (esp_now_init() != ESP_OK)
     {
         Serial.println("Error initializing ESP-NOW");
         return;
     }
-    esp_now_recv_cb_t();
-    //esp_now_register_send_cb(OnDataSent);
+    esp_now_recv_cb_t(OnDataRecieve); //注册回调处理函数
 
     // register peer
     esp_now_peer_info_t peerInfo;
     peerInfo.channel = 0;
-    peerInfo.encrypt = false;   
+    peerInfo.encrypt = false;
     // register first peer
     memcpy(peerInfo.peer_addr, broadcastAddress1, 6);
 
@@ -77,13 +66,7 @@ void setup()
 
 void loop()
 {
-    float a1_degree = analogRead(hands_a1);
-    float a2_degree = analogRead(hands_a2);
-    float a3_degree = analogRead(hands_a3);
-    float a4_degree = analogRead(hands_a4);
-    float a5_degree = analogRead(hands_a5);
-
-    // a1_degree = a1_degree * (5.0 / 4095.0);
+    a1_degree = a1_degree * (5.0 / 4095.0);
     a2_degree = a2_degree * (5.0 / 4095.0);
     a3_degree = a3_degree * (5.0 / 4095.0);
     a4_degree = a4_degree * (5.0 / 4095.0);
@@ -121,17 +104,8 @@ void loop()
     sending_data.a4 = a4_degree;
     sending_data.a5 = a5_degree;
 
-    esp_err_t result =
-        esp_now_send(0, (uint8_t *)&sending_data, sizeof(data_structure));
+    // esp_err_t result =
+    //     esp_now_send(0, (uint8_t *)&sending_data, sizeof(data_structure));
 
-    if (result == ESP_OK)
-    {
-        Serial.println("Sent with success");
-    }
-    else
-    {
-        Serial.println("Error sending the data");
-    }
     delay(1500);
 }
-
