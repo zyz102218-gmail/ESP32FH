@@ -1,80 +1,122 @@
 // code from https://randomnerdtutorials.com/esp32-esp-now-wi-fi-web-server/
 
+/*
+ * Code by Zirui Hu & Dill Zhu
+ * BUAA Physics
+ * Date: 20220207
+ * 数据接收端demo
+ * 这个demo中没有调用ESP-NOW协议进行数据传输，仅仅考虑异步服务器更新页面内容
+ * 异步服务器数据源为循环int列表
+ * 异步服务器接收到按钮动作时，会在serial上print出来
+ */
+
 //接受端
 #include <esp_now.h>
 #include <WiFi.h>
 #include "ESPAsyncWebServer.h"
 #include <Arduino_JSON.h>
 
-// Replace with your network credentials (STATION)
+//定义softAP相关设置
 const char *ssid = "DillTest";
 const char *password = "12345678";
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-// Structure example to receive data
-// Must match the sender structure
+// 定义数据接收结构体
+// ESP-NOW协议使用
 // a1是0-4095之间的数
 typedef struct struct_message
 {
-    int a1;
-    int a2;
-    int a3;
-    int a4;
-    int a5;
+  int a1;
+  int a2;
+  int a3;
+  int a4;
+  int a5;
 } struct_message;
-
+//初始化一个结构体，用于接收数据
 struct_message incomingReadings;
+//初始化一个String，用于文字信息提示 这个字符串是展示在网页上的提示文本，一定要注意适时修改
+String InfoStr = "";
+//初始化一个flag，标识当前程序进展顺序
+// 1 -> 正在采集最大
+// 2 -> 正在采集最小
+// 3 -> 初始化完成，进行相关工作，开始映射
+int flag = 1;
+//创建结构体，用于存储数据最大和最小静态值
+struct FingerStaticData
+{
+  int Finger1;
+  int Finger2;
+  int Finger3;
+  int Finger4;
+  int Finger5;
+};
 
+//初始化结构体，最大：
+FingerStaticData *MAX;
+//初始化结构体，最小：
+FingerStaticData *MIN;
+
+//初始化一个用于确认按钮是否被按下的量
+// 0 未被按下
+// 1 已被按下
+int ButtonClicked = 0;
 //用json创建一个fingers，存储数据，用于ajax刷新页面
 JSONVar fingers;
 
 // AsyncWebServer server(80); //创建异步服务器
-AsyncWebServer *server = new AsyncWebServer(80); //创建异步服务器
+AsyncWebServer *server = new AsyncWebServer(80); //在80端口创建异步服务器 指针形式
 AsyncEventSource events("/events");              //创建事件源 /events
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
-    // Copies the sender mac address to a string
-    char macStr[18];
-    Serial.print("Packet received from: ");
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    Serial.println(macStr);
-    //打印发件人mac，这个不需要可以删除
-    //不过反正是在终端打印，跟实际的传输一点关系都没有
+  // Copies the sender mac address to a string
+  char macStr[18];
+  Serial.print("Packet received from: ");
+  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  Serial.println(macStr);
+  //打印发件人mac，这个不需要可以删除
+  //不过反正是在终端打印，跟实际的传输一点关系都没有
 
-    //复制传入数据变量进入传入读取结构变量
-    //这个地方是不是因为incomingdata不是字符串或者转译啥的啊
-    memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
+  //复制传入数据变量进入传入读取结构变量
+  //这个地方是不是因为incomingdata不是字符串或者转译啥的啊
+  memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
 
-    //使用收到的信息创建一个 JSON 字符串变量
-    fingers["a1"] = incomingReadings.a1;
-    fingers["a2"] = incomingReadings.a2;
-    fingers["a3"] = incomingReadings.a3;
-    fingers["a4"] = incomingReadings.a4;
-    fingers["a5"] = incomingReadings.a5;
-    String jsonString = JSON.stringify(fingers);
+  //使用收到的信息创建一个 JSON 字符串变量
+  //这一部分未来会改成mapping
+  if (flag >= 3) //如果初始化过程，最大最小采集全部完成
+  {
+  }
+  fingers["a1"] = incomingReadings.a1;
+  fingers["a2"] = incomingReadings.a2;
+  fingers["a3"] = incomingReadings.a3;
+  fingers["a4"] = incomingReadings.a4;
+  fingers["a5"] = incomingReadings.a5;
+  fingers["text"] = InfoStr; //一定要注意这部分的更新
+  String jsonString = JSON.stringify(fingers);
 
-    //收集所有接收到的数据后jsonString变量，将该信息作为事件 （"new_readings").
-    // millis的意义相当于delay函数
-    events.send(jsonString.c_str(), "new_readings", millis());
+  //收集所有接收到的数据后jsonString变量，将该信息作为事件 （"new_readings"）.
+  // millis的意义相当于delay函数
+  // 其实并不是，是打一个时间戳作为发送ID，用于标识这个数据是不是被重复发送的
+  events.send(jsonString.c_str(), "new_readings", millis());
 
-    // Serial.printf("t value: %4.2f \n", incomingReadings.a1);
-    // Serial.printf("h value: %4.2f \n", incomingReadings.a2);
-    // Serial.printf("t value: %4.2f \n", incomingReadings.a3);
-    // Serial.printf("h value: %4.2f \n", incomingReadings.a4);
-    // Serial.printf("h value: %4.2f \n", incomingReadings.a5);
+  // Serial.printf("t value: %4.2f \n", incomingReadings.a1);
+  // Serial.printf("h value: %4.2f \n", incomingReadings.a2);
+  // Serial.printf("t value: %4.2f \n", incomingReadings.a3);
+  // Serial.printf("h value: %4.2f \n", incomingReadings.a4);
+  // Serial.printf("h value: %4.2f \n", incomingReadings.a5);
 
-    // Serial.println();
+  // Serial.println();
 }
 
+#ifndef ___HTML //定义网页
+#define ___HTML
 //构建网页
 const char index_html[] PROGMEM = R"rawliteral(<!DOCTYPE HTML>
 <html>
-
 <head>
   <title>ESP-NOW DASHBOARD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -240,40 +282,48 @@ const char index_html[] PROGMEM = R"rawliteral(<!DOCTYPE HTML>
 </body>
 
 </html>)rawliteral";
+#endif
 
 void setup()
 {
-    Serial.begin(115200);
+  //初始化串口，设置波特率为115200
+  Serial.begin(115200);
 
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid, password);
-    WiFi.softAPConfig(local_IP, gateway, subnet);
-    Serial.println();
-    Serial.print("The SSID is: ");
-    Serial.println(ssid);
-    Serial.print("The password is: ");
-    Serial.println(password);
-    Serial.print("The station's IP address is: ");
-    Serial.println(WiFi.softAPIP());
+  //设置WIFI工作在softAP模式
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+  WiFi.softAPConfig(local_IP, gateway, subnet);
+  //串口输出debug信息
+  Serial.println();
+  Serial.print("The SSID is: ");
+  Serial.println(ssid);
+  Serial.print("The password is: ");
+  Serial.println(password);
+  Serial.print("The station's IP address is: ");
+  Serial.println(WiFi.softAPIP());
 
-    //初始化esp now
-    if (esp_now_init() != ESP_OK)
-    {
-        Serial.println("Error initializing ESP-NOW");
-        return;
-    }
+  //初始化esp now
+  if (esp_now_init() != ESP_OK)
+  {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  else
+  {
+    Serial.println("ESP-NOW initialied! Sueecessed");
+  }
 
-    //注册回调函数，每个数据包执行一次
-    esp_now_register_recv_cb(OnDataRecv);
+  //注册回调函数，每个数据包执行一次
+  esp_now_register_recv_cb(OnDataRecv);
 
-    //访问ip时，发送存储在/index_html的变量构建这个网页
-    server->on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-               { request->send_P(200, "text/html", index_html); });
+  //访问ip时，发送存储在/index_html的变量构建这个网页
+  server->on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+             { request->send_P(200, "text/html", index_html); });
 
-    //往后而至
-    //在服务器设置事件源，即要被监听的对象
-    events.onConnect([](AsyncEventSourceClient *client)
-                     {
+  //往后而至
+  //在服务器设置事件源，即要被监听的对象
+  events.onConnect([](AsyncEventSourceClient *client)
+                   {
     if(client->lastId()){
       Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
 
@@ -281,13 +331,15 @@ void setup()
     // send event with message "hello!", id current millis
     // and set reconnect delay to 1 second
     client->send("hello!", NULL, millis(), 10000); });
-    //往上，都不知道是什么意思，为什么要有这个？
-    server->on("/update", HTTP_GET, [](AsyncWebServerRequest *request)
-               {
+  //往上，都不知道是什么意思，为什么要有这个？（这个确实没用，只是调试网页，确定其运行情况方便）
+  //设置网页交互模块，定义按下按钮后发送的GET操作如何处理（目前是在串口打印确认接收的信息）
+  server->on("/update", HTTP_GET, [](AsyncWebServerRequest *request)
+             {
                String inputMessage;
                if (request->hasParam("input"))
                {
                  inputMessage = request->getParam("input")->value();
+                 ButtonClicked = 1; //设置按钮被按下
                }
                else
                {
@@ -297,36 +349,77 @@ void setup()
                Serial.println(inputMessage);
                request->send(200, "text/plain", "OK"); });
 
-    server->addHandler(&events);
+  server->addHandler(&events);
 
-    server->begin();
+  server->begin();
 }
-
-int i = 0;
-int a[] = {1, 2, 3, 4, 5, 6};
 
 //每5000ms发送一个ping，检查服务器运行状况
 void loop()
 {
-    //刷新测试用，后期需要删除
-    i++;
-    fingers["a1"] = a[i];
-    fingers["a2"] = a[i];
-    fingers["a3"] = a[i];
-    fingers["a4"] = a[i];
-    fingers["a5"] = a[i];
-    fingers["text"] = "请按下按钮采集初始值";
-    String jsonString = JSON.stringify(fingers);
-    events.send(jsonString.c_str(), "new_readings", millis());
-    static unsigned long lastEventTime = millis();
-    static const unsigned long EVENT_INTERVAL_MS = 5000;
-    if ((millis() - lastEventTime) > EVENT_INTERVAL_MS)
+  if (flag == 1) //正在采集最大值
+  {
+    InfoStr = "请保持到最大水平，后按下按钮";
+    while (ButtonClicked == 0)
+      ; //等待按钮被按下
+    //记录最大值
+    MAX->Finger1 = incomingReadings.a1;
+    MAX->Finger2 = incomingReadings.a2;
+    MAX->Finger3 = incomingReadings.a3;
+    MAX->Finger4 = incomingReadings.a4;
+    MAX->Finger5 = incomingReadings.a5;
+    ButtonClicked = 0;
+    flag = 2;
+  }
+  elif (flag == 2)
+  {
+    InfoStr = "请保持到最小水平，后按下按钮";
+    while (ButtonClicked == 0)
+      ; //等待按钮被按下
+    //记录最小值
+    MIN->Finger1 = incomingReadings.a1;
+    MIN->Finger2 = incomingReadings.a2;
+    MIN->Finger3 = incomingReadings.a3;
+    MIN->Finger4 = incomingReadings.a4;
+    MIN->Finger5 = incomingReadings.a5;
+    ButtonClicked = 0;
+    //开始检测 是否存在初始化问题
+    if (MAX->Finger1 <= MIN->Finger1 || MAX->Finger2 <= MIN->Finger2 ||
+        MAX->Finger3 <= MIN->Finger3 || MAX->Finger4 <= MIN->Finger4 ||
+        MAX->Finger5 <= MIN->Finger5)
     {
-        events.send("ping", NULL, millis());
-        lastEventTime = millis();
+      //至少有一个手指存在问题
+      flag = 1;
+      Serial.println("Data is inpossible to wave. At least one finger's max data is smaller than minium data");
+      Serial.println("MIN Data : ", MIN->Finger1, " ", MIN->Finger2);
+      Serial.println(MIN->Finger3, " ", MIN->Finger4, " ", MIN->Finger5);
+      Serial.println("MAX Data : ", MAX->Finger1, " ", MAX->Finger2);
+      Serial.println(MAX->Finger3, " ", MAX->Finger4, " ", MAX->Finger5);
+      Serial.println("Restart getting information");
+      InfoStr = "初始化失败，按下按钮重新开始"; //推送数据
+      while (ButtonClicked == 0)
+        ;                //等待按钮被按下
+      ButtonClicked = 0; //复位按钮数据
     }
-    if (i >= 5)
-        i = 0;
-    //延时，防止爆内存
-    delay(100);
+    else
+    { //数据没有问题，开始正常工作
+      flag = 3;
+    }
+  }
+  else
+  {
+    InfoStr = "初始化工作完成，可以开始工作";
+  }
+  static unsigned long lastEventTime = millis();
+  static const unsigned long EVENT_INTERVAL_MS = 5000;
+  if ((millis() - lastEventTime) > EVENT_INTERVAL_MS)
+  {
+    events.send("ping", NULL, millis());
+    lastEventTime = millis();
+  }
+  if (i >= 5)
+    i = 0;
+
+  //延时
+  delay(100);
 }
