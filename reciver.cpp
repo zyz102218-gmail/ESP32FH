@@ -57,7 +57,24 @@ struct FingerStaticData
 FingerStaticData *MAX;
 //初始化结构体，最小：
 FingerStaticData *MIN;
-
+//定义一个mapping函数
+int mapping(const int &data, const int &min, const int &max)
+{
+  if (data <= min)
+  {
+    return 0;
+  }
+  elif (data >= max)
+  {
+    return 180;
+  }
+  else
+  {
+    float len = max - min;
+    float addV = data - min;
+    return 180.0f * (addV / len);
+  }
+}
 //初始化一个用于确认按钮是否被按下的量
 // 0 未被按下
 // 1 已被按下
@@ -88,13 +105,21 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   //使用收到的信息创建一个 JSON 字符串变量
   //这一部分未来会改成mapping
   if (flag >= 3) //如果初始化过程，最大最小采集全部完成
-  {
+  {              //执行mapping
+    fingers["a1"] = mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1);
+    fingers["a2"] = mapping(incomingReadings.a2, MIN->Finger2, MAX->Finger2);
+    fingers["a3"] = mapping(incomingReadings.a3, MIN->Finger3, MAX->Finger3);
+    fingers["a4"] = mapping(incomingReadings.a4, MIN->Finger4, MAX->Finger4);
+    fingers["a5"] = mapping(incomingReadings.a5, MIN->Finger5, MAX->Finger5);
   }
-  fingers["a1"] = incomingReadings.a1;
-  fingers["a2"] = incomingReadings.a2;
-  fingers["a3"] = incomingReadings.a3;
-  fingers["a4"] = incomingReadings.a4;
-  fingers["a5"] = incomingReadings.a5;
+  else
+  { //没有初始化，没有角度数据
+    fingers["a1"] = "--";
+    fingers["a2"] = "--";
+    fingers["a3"] = "--";
+    fingers["a4"] = "--";
+    fingers["a5"] = "--";
+  }
   fingers["text"] = InfoStr; //一定要注意这部分的更新
   String jsonString = JSON.stringify(fingers);
 
@@ -357,7 +382,7 @@ void setup()
 //每5000ms发送一个ping，检查服务器运行状况
 void loop()
 {
-  if (flag == 1) //正在采集最大值
+  if (flag == 1) //采集最大值，最小值，采集过程异常处理
   {
     InfoStr = "请保持到最大水平，后按下按钮";
     while (ButtonClicked == 0)
@@ -396,7 +421,7 @@ void loop()
       Serial.println("MAX Data : ", MAX->Finger1, " ", MAX->Finger2);
       Serial.println(MAX->Finger3, " ", MAX->Finger4, " ", MAX->Finger5);
       Serial.println("Restart getting information");
-      InfoStr = "初始化失败，按下按钮重新开始"; //推送数据
+      InfoStr = "初始化失败，按下按钮重新开始"; //推送数据到网页
       while (ButtonClicked == 0)
         ;                //等待按钮被按下
       ButtonClicked = 0; //复位按钮数据
@@ -410,6 +435,7 @@ void loop()
   {
     InfoStr = "初始化工作完成，可以开始工作";
   }
+  //数据初始化过程结束
   static unsigned long lastEventTime = millis();
   static const unsigned long EVENT_INTERVAL_MS = 5000;
   if ((millis() - lastEventTime) > EVENT_INTERVAL_MS)
@@ -417,8 +443,6 @@ void loop()
     events.send("ping", NULL, millis());
     lastEventTime = millis();
   }
-  if (i >= 5)
-    i = 0;
 
   //延时
   delay(100);
