@@ -1,5 +1,12 @@
 // code from https://randomnerdtutorials.com/esp32-esp-now-wi-fi-web-server/
-
+/*
+ * Code by Zirui Hu & Dill Zhu
+ * BUAA Physics
+ * Date: 20220207
+ * 数据发送端
+ * 目前需要解决的问题是ESP-NOW的发送/接收问题，仍然需要解决
+ * 目前接收不成功，发送端反馈未发送，接受端接收函数没有被执行
+ */
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
@@ -12,10 +19,10 @@
 
 /* As a matter of fact, the ADC supports serval modes,
  * which will change its resolution. On default, it works on 12bits.
- * 
+ *
  */
 //记得改一下mac地址
-uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+uint8_t broadcastAddress[] = {0x78, 0xE3, 0x6D, 0x64, 0x1A, 0xD9};
 
 // Structure example to send data
 // Must match the receiver structure
@@ -41,7 +48,6 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     Serial.print("\r\nLast Packet Send Status:\t");
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
-
 void setup()
 {
     Serial.begin(115200);
@@ -58,10 +64,27 @@ void setup()
     //注册回调函数
     esp_now_register_send_cb(OnDataSent);
 }
-
+//读取ADC数值
+void ReadFromADCs()
+{
+    myData.a1 = analogRead(36);
+    myData.a2 = analogRead(39);
+    myData.a3 = analogRead(35);
+    myData.a4 = analogRead(32);
+    myData.a5 = analogRead(34);
+}
 void loop()
 {
     // ESP-NOW发送消息结构
+    ReadFromADCs();
+    Serial.println("------------------");
+    Serial.print("Tag is: ");
+    Serial.println(millis());
+    Serial.println(myData.a1);
+    Serial.println(myData.a2);
+    Serial.println(myData.a3);
+    Serial.println(myData.a4);
+    Serial.println(myData.a5);
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     if (result == ESP_OK)
     {
@@ -71,4 +94,7 @@ void loop()
     {
         Serial.println("Error sending the data");
     }
+
+    //需要删除
+    delay(500);
 }
