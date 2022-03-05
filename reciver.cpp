@@ -384,6 +384,7 @@ void loop()
 {
   if (flag == 1) //采集最大值，最小值，采集过程异常处理
   {
+    //采集最大值
     InfoStr = "请保持到最大水平，后按下按钮";
     while (ButtonClicked == 0)
       ; //等待按钮被按下
@@ -398,6 +399,7 @@ void loop()
   }
   elif (flag == 2)
   {
+    //采集最小值
     InfoStr = "请保持到最小水平，后按下按钮";
     while (ButtonClicked == 0)
       ; //等待按钮被按下

@@ -4,6 +4,16 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 
+/* Important! The ADC2 cannot be used when Wi-Fi function is enabled.
+ * Thus, if we wanted to enable ESP-Now to transform information,
+ * we cannot use ADC2 to generate information.
+ * GPIO for ADC1 is 36, 39, 34, 35, 32, 33
+ */
+
+/* As a matter of fact, the ADC supports serval modes,
+ * which will change its resolution. On default, it works on 12bits.
+ * 
+ */
 //记得改一下mac地址
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
