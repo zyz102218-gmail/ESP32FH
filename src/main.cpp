@@ -2,7 +2,8 @@
 /*
  * Code by Zirui Hu & Dill Zhu
  * BUAA Physics
- * Date: 20220207
+ * Date: 20220225
+ * Latest commit: 20220307
  * 数据发送端
  * 目前需要解决的问题是ESP-NOW的发送/接收问题，仍然需要解决
  * 目前接收不成功，发送端反馈未发送，接受端接收函数没有被执行
