@@ -1,5 +1,6 @@
 // code from https://randomnerdtutorials.com/esp32-esp-now-wi-fi-web-server/
 /*
+
  * Code by Zirui Hu & Dill Zhu
  * BUAA Physics
  * Date: 20220225
@@ -7,6 +8,7 @@
  * 数据发送端
  * 目前需要解决的问题是ESP-NOW的发送/接收问题，仍然需要解决
  * 目前接收不成功，发送端反馈未发送，接受端接收函数没有被执行
+ * 原因查明：没有添加peer
  */
 #include <esp_now.h>
 #include <esp_wifi.h>
@@ -24,7 +26,6 @@
  */
 //记得改一下mac地址
 uint8_t broadcastAddress[] = {0x78, 0xE3, 0x6D, 0x64, 0x1A, 0xD9};
-
 // Structure example to send data
 // Must match the receiver structure
 typedef struct struct_message
@@ -37,7 +38,8 @@ typedef struct struct_message
 } struct_message;
 
 struct_message myData;
-
+const char *ssid = "DillTest";
+const char *password = "12345678";
 //创建一些辅助计时器变量10000ms发布一次
 unsigned long previousMillis = 0; // Stores last time temperature was published
 const long interval = 10000;      // Interval at which to publish sensor readings
@@ -54,11 +56,24 @@ void setup()
     Serial.begin(115200);
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin();
+    WiFi.begin(ssid, password);
+
     //初始化ESP-NOW
     if (esp_now_init() != ESP_OK)
     {
         Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+    else
+    {
+        Serial.println("ESP-Now initializiation Successed!");
+    }
+    esp_now_peer_info peerInfo;
+    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+    peerInfo.encrypt = false;
+    if (esp_now_add_peer(&peerInfo) != ESP_OK)
+    {
+        Serial.println("Failed to add peer");
         return;
     }
 
@@ -68,24 +83,24 @@ void setup()
 //读取ADC数值
 void ReadFromADCs()
 {
-    myData.a1 = analogRead(36);
-    myData.a2 = analogRead(39);
-    myData.a3 = analogRead(35);
-    myData.a4 = analogRead(32);
-    myData.a5 = analogRead(34);
+    myData.a1 = int(analogRead(36));
+    myData.a2 = int(analogRead(39));
+    myData.a3 = int(analogRead(35));
+    myData.a4 = int(analogRead(32));
+    myData.a5 = int(analogRead(34));
 }
 void loop()
 {
     // ESP-NOW发送消息结构
     ReadFromADCs();
-    Serial.println("------------------");
-    Serial.print("Tag is: ");
-    Serial.println(millis());
-    Serial.println(myData.a1);
-    Serial.println(myData.a2);
-    Serial.println(myData.a3);
-    Serial.println(myData.a4);
-    Serial.println(myData.a5);
+    // Serial.println("------------------");
+    // Serial.print("Tag is: ");
+    // Serial.println(millis());
+    // Serial.println(myData.a1);
+    // Serial.println(myData.a2);
+    // Serial.println(myData.a3);
+    // Serial.println(myData.a4);
+    // Serial.println(myData.a5);
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     if (result == ESP_OK)
     {
@@ -94,6 +109,7 @@ void loop()
     else
     {
         Serial.println("Error sending the data");
+        Serial.println(result); //报0x3069(12193) 查表得知找不到Peer
     }
 
     //需要删除
