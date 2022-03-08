@@ -457,5 +457,4 @@ void loop()
     // Serial.println(ButtonClicked);
     // Serial.print("Flag: ");
     // Serial.println(flag);
-    delay(200);
 }
