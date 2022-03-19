@@ -89,14 +89,7 @@ void loop()
 {
     // ESP-NOW发送消息结构
     ReadFromADCs();
-    // Serial.println("------------------");
-    // Serial.print("Tag is: ");
-    // Serial.println(millis());
-    // Serial.println(myData.a1);
-    // Serial.println(myData.a2);
-    // Serial.println(myData.a3);
-    // Serial.println(myData.a4);
-    // Serial.println(myData.a5);
+
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     if (result == ESP_OK)
     {
