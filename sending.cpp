@@ -100,6 +100,7 @@ void loop()
         Serial.println("Error sending the data");
         Serial.println(result); //报0x3069(12193) 查表得知找不到Peer
     }
+    Serial.println(myData.a1)
 
     //需要删除
     delay(500);
