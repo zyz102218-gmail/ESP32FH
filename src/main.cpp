@@ -22,6 +22,7 @@ const char *password = "12345678";
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
+//步进电机使用，五个类
 Servo a1_servo;
 Servo a2_servo;
 Servo a3_servo;
@@ -68,6 +69,14 @@ int a3_servoPin = 19;
 int a4_servoPin = 18;
 int a5_servoPin = 17;
 //定义一个mapping函数
+/*
+ *
+ *@param data 原始数据为x
+ *@param min x最低值
+ *@param max x最大值
+ *@param MinDegre 最小角度
+ *@param MaxDegree 最大角度
+ */
 int mapping(const int &data, const int &min, const int &max, int MinDegree, int MaxDegree)
 {
   if (data <= min)
@@ -116,6 +125,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   //这一部分未来会改成mapping
   if (flag >= 3) //如果初始化过程，最大最小采集全部完成
   {              //执行mapping
+
+    //理论实际代码
     // fingers["a1"] = mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90);
     // fingers["a2"] = mapping(incomingReadings.a2, MIN->Finger2, MAX->Finger2, 0, 120);
     // fingers["a3"] = mapping(incomingReadings.a3, MIN->Finger3, MAX->Finger3, 0, 120);
@@ -126,6 +137,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     // a3_servo.write(int(mapping(incomingReadings.a3, MIN->Finger3, MAX->Finger3, 0, 120)));
     // a4_servo.write(int(mapping(incomingReadings.a4, MIN->Finger4, MAX->Finger4, 0, 120)));
     // a5_servo.write(int(mapping(incomingReadings.a5, MIN->Finger5, MAX->Finger5, 0, 90)));
+    // 理论实际代码结束
 
     //一个手指测试用
     fingers["a1"] = mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90);
@@ -138,6 +150,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     a3_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
     a4_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
     a5_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
+    //测试代码结束
 
     Serial.print("Raw data: ");
     Serial.println(incomingReadings.a1);
@@ -493,7 +506,6 @@ void loop()
     }
     //复位
   }
-
   else
   {
     InfoStr = "初始化工作完成，可以开始工作";
