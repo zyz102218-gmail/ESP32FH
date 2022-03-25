@@ -22,6 +22,7 @@ const char *password = "12345678";
 IPAddress local_IP(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
+//步进电机使用，五个类
 Servo a1_servo;
 Servo a2_servo;
 Servo a3_servo;
@@ -62,21 +63,28 @@ FingerStaticData *MAX = new FingerStaticData;
 //初始化结构体，最小：
 FingerStaticData *MIN = new FingerStaticData;
 // Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33,记得改
-int a1_servoPin = 32;
+int a1_servoPin = 21;
 int a2_servoPin = 33;
 int a3_servoPin = 19;
 int a4_servoPin = 18;
 int a5_servoPin = 17;
 //定义一个mapping函数
+/*
+ *@param data 原始数据为x
+ *@param min x最低值
+ *@param max x最大值
+ *@param MinDegre 最小角度
+ *@param MaxDegree 最大角度
+ */
 int mapping(const int &data, const int &min, const int &max, int MinDegree, int MaxDegree)
 {
   if (data <= min)
   {
-    return 0;
+    return MinDegree;
   }
   else if (data >= max)
   {
-    return 180;
+    return MaxDegree;
   }
   else
   {
@@ -85,6 +93,7 @@ int mapping(const int &data, const int &min, const int &max, int MinDegree, int 
     return MinDegree + ((MaxDegree - MinDegree) * (addV / len));
   }
 }
+
 //初始化一个用于确认按钮是否被按下的量
 // 0 未被按下
 // 1 已被按下
@@ -116,6 +125,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   //这一部分未来会改成mapping
   if (flag >= 3) //如果初始化过程，最大最小采集全部完成
   {              //执行mapping
+
+    //理论实际代码
     // fingers["a1"] = mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90);
     // fingers["a2"] = mapping(incomingReadings.a2, MIN->Finger2, MAX->Finger2, 0, 120);
     // fingers["a3"] = mapping(incomingReadings.a3, MIN->Finger3, MAX->Finger3, 0, 120);
@@ -126,6 +137,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     // a3_servo.write(int(mapping(incomingReadings.a3, MIN->Finger3, MAX->Finger3, 0, 120)));
     // a4_servo.write(int(mapping(incomingReadings.a4, MIN->Finger4, MAX->Finger4, 0, 120)));
     // a5_servo.write(int(mapping(incomingReadings.a5, MIN->Finger5, MAX->Finger5, 0, 90)));
+    // 理论实际代码结束
 
     //一个手指测试用
     fingers["a1"] = mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90);
@@ -138,6 +150,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     a3_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
     a4_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
     a5_servo.write(int(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90)));
+    //测试代码结束
 
     Serial.print("Raw data: ");
     Serial.println(incomingReadings.a1);
@@ -424,7 +437,9 @@ void setup()
   a5_servo.setPeriodHertz(50);
   a5_servo.attach(a5_servoPin, 100, 2400);
 }
-
+int i = 0;
+int j[] = {30, 120};
+unsigned int PWM = 0;
 //每5000ms发送一个ping，检查服务器运行状况
 void loop()
 {
@@ -493,7 +508,6 @@ void loop()
     }
     //复位
   }
-
   else
   {
     InfoStr = "初始化工作完成，可以开始工作";
