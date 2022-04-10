@@ -15,12 +15,7 @@
 #include "ESPAsyncWebServer.h"
 #include <ESP32Servo.h> //PWM 库
 #include <Arduino_JSON.h>
-  // a1_servo.write(R); //中指 50~150
-  // a2_servo.write(R); //无名指 40~120
-  // a3_servo.write(R);//小指 40~110
-  // a4_servo.write(R); //食指 100~180
-  // a5_servo.write(R); //大拇指 35~150
-  
+
 //定义softAP相关设置
 const char *ssid = "DillTest";
 const char *password = "12345678";
@@ -160,7 +155,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     Serial.print("Raw data: ");
     Serial.println(incomingReadings.a1);
     Serial.print("The mapping data is: ");
-    Serial.print(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 50, 150));
+    Serial.print(mapping(incomingReadings.a1, MIN->Finger1, MAX->Finger1, 0, 90));
     Serial.println(" Degrees");
   }
   else
@@ -444,11 +439,13 @@ void setup()
   a5_servo.attach(a5_servoPin, 100, 2400);
 }
 int i = 0;
-int j[] = {30, 120};
+int j[] = {35, 60, 90, 135, 150};
 unsigned int PWM = 0;
 //每5000ms发送一个ping，检查服务器运行状况
 void loop()
 {
+  //强制开始测试
+  flag = 3;
   if (flag == 1) //采集最大值，最小值，采集过程异常处理
   {
     //采集最大值
@@ -526,4 +523,17 @@ void loop()
     events.send("ping", NULL, millis());
     lastEventTime = millis();
   }
+  int R = j[i];
+  Serial.println(R);
+  // a1_servo.write(R); //中指 50~150
+  // a2_servo.write(R); //无名指 40~120
+  // a3_servo.write(R);//小指 40~110
+  // a4_servo.write(R); //食指 100~180
+  // a5_servo.write(R); //大拇指 35~150
+  i += 1;
+  if (i >= 5)
+  {
+    i = 0;
+  }
+  delay(2000);
 }
