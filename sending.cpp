@@ -128,5 +128,9 @@ void loop()
       Serial.println(result); //报0x3069(12193) 查表得知找不到Peer
     }
     Serial.println(myData.a1);
+    Serial.println(myData.a2);
+    Serial.println(myData.a3);
+    Serial.println(myData.a4);
+    Serial.println(myData.a5);
   }
 }
