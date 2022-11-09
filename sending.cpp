@@ -111,6 +111,14 @@ void loop()
     myData.a3 = int(accumulate(begin(RawInfo.a3), end(RawInfo.a3), 0.0) / RawInfo.a3.size());
     myData.a4 = int(accumulate(begin(RawInfo.a4), end(RawInfo.a4), 0.0) / RawInfo.a4.size());
     myData.a5 = int(accumulate(begin(RawInfo.a5), end(RawInfo.a5), 0.0) / RawInfo.a5.size());
+    //只打印可以发送的数据
+    Serial.println("---------");
+    Serial.println(myData.a1);
+    Serial.println(myData.a2);
+    Serial.println(myData.a3);
+    Serial.println(myData.a4);
+    Serial.println(myData.a5);
+    Serial.println("---------");
     //清空之前保存的值，以便重新读取
     RawInfo.a1.clear();
     RawInfo.a2.clear();
@@ -127,10 +135,6 @@ void loop()
       Serial.println("Error sending the data");
       Serial.println(result); //报0x3069(12193) 查表得知找不到Peer
     }
-    Serial.println(myData.a1);
-    Serial.println(myData.a2);
-    Serial.println(myData.a3);
-    Serial.println(myData.a4);
-    Serial.println(myData.a5);
   }
+  delay(10);
 }
